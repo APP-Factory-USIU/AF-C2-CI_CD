@@ -1,14 +1,13 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
+import path from 'node:path';
 import dotenv from 'dotenv';
 import { calculate, MathOperation } from './math.ts';
 
-// Load environment variables from .env file
+// Load environment variables from .env file.
 dotenv.config();
 
 /**
- * Validates that required environment variables are set before starting the application.
- * In a university DevOps setting, this demonstrates that application initialization
- * depends on external configuration injected by the runtime environment (Docker or CI runner).
+ * Validates required environment variables before starting the application.
  */
 export function validateEnv(): void {
   const apiKey = process.env.API_KEY;
@@ -22,13 +21,14 @@ export function validateEnv(): void {
 }
 
 export function createApp(): Express {
-  // Enforce environment validation on application startup
   validateEnv();
 
   const app = express();
   app.use(express.json());
 
-  // Health check endpoint (for Docker HEALTHCHECK and monitoring)
+  // Serve the Vite production build from the same container as the API.
+  app.use(express.static(path.resolve(process.cwd(), 'dist')));
+
   app.get('/health', (_req: Request, res: Response) => {
     res.status(200).json({
       status: 'healthy',
@@ -38,7 +38,6 @@ export function createApp(): Express {
     });
   });
 
-  // Authentication middleware: Verifies incoming request has valid x-api-key or apiKey query
   const requireApiKey = (req: Request, res: Response, next: NextFunction) => {
     const providedKey = req.headers['x-api-key'] || req.query.apiKey;
     const expectedKey = process.env.API_KEY;
@@ -53,11 +52,6 @@ export function createApp(): Express {
     next();
   };
 
-  /**
-   * Main calculation endpoint
-   * GET /calculate?a=10&b=5&op=add
-   * POST /calculate body: { a: 10, b: 5, operation: "add" }
-   */
   const handleCalculate = (req: Request, res: Response) => {
     try {
       const a = Number(req.body?.a ?? req.query.a);
