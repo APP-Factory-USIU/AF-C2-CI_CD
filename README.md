@@ -90,6 +90,20 @@ docker build -t devops-course-api:latest .
 * **Stage 2 (`runner`)**: Starts from `node:22-alpine`, installs production dependencies, copies the built frontend and Express source, switches to the unprivileged `USER node`, and starts the API with the `tsx` runtime.
 * **Result**: The final image serves the Vite frontend and exposes the Express API on port 3000. The API still requires `API_KEY` at runtime.
 
+#### Troubleshooting: `Cannot find native binding`
+
+Alpine uses musl rather than glibc. Vite/Rolldown, Tailwind, and Lightning CSS
+need their matching musl native packages. A lockfile generated with an existing
+`node_modules` directory can omit these optional dependencies, even when local
+builds on glibc Linux succeed. `npm ci` faithfully installs that incomplete
+lockfile; disabling its cache or supplying `API_KEY` at build time will not fix it.
+
+Keep the complete, cross-platform `package-lock.json` committed. If it needs to
+be regenerated, run `npm install --package-lock-only` with the project manifest
+in a clean directory containing neither `node_modules` nor an old lockfile,
+then review the dependency changes. `npm test` checks that the native bindings
+remain locked; verify the result with `docker build --no-cache .`.
+
 ### Step 4: Run the Container
 
 Launch the container, passing your local `.env` file into the container runtime:
