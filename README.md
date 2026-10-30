@@ -53,8 +53,8 @@ Follow these steps to demonstrate that the service runs identically on any works
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/your-university-org/devops-reproducible-ci.git
-cd devops-reproducible-ci
+git clone https://github.com/APP-Factory-USIU/AF-C2-CI_CD.git
+cd AF-C2-CI_CD
 ```
 
 ### Step 2: Configure Your Environment Variables
