@@ -73,7 +73,9 @@ def create_app():
                 message="Invalid or missing API key. Provide the x-api-key header or apiKey query parameter.",
             ), 401
 
-        body = request.get_json(silent=True) or {}
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            body = {}
         a_raw = body.get("a") if body.get("a") is not None else request.args.get("a")
         b_raw = body.get("b") if body.get("b") is not None else request.args.get("b")
         operation = str(body.get("operation") or request.args.get("op") or "add")
@@ -97,6 +99,7 @@ def create_app():
             ), 200
         except (ValueError, ZeroDivisionError, OverflowError) as error:
             return jsonify(error="Calculation Error", message=str(error) or "Unknown calculation error"), 400
+
 
     return app
 

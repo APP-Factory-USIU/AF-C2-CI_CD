@@ -1,0 +1,46 @@
+name: Standalone Implementations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "implementations/**"
+      - ".github/workflows/implementations.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "implementations/**"
+      - ".github/workflows/implementations.yml"
+
+jobs:
+  typescript:
+    name: TypeScript checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: implementations/typescript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: docker build -t calculator-typescript .
+
+  python:
+    name: Python checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: implementations/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m unittest discover -s . -p 'tests.py' -v
+      - run: docker build -t calculator-python .
