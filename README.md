@@ -27,7 +27,7 @@ By completing this laboratory module, students will learn:
 ├── .env.example                 # Environment template with dummy variables
 ├── .gitignore                   # Excludes .env, node_modules/, dist/, coverage/
 ├── .dockerignore                # Prevents local artifacts and secrets from leaking into images
-├── Dockerfile                   # Two-stage multi-stage build (builder -> runner)
+├── Dockerfile                   # Multi-stage build for Vite frontend + Express API
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml               # Production CI pipeline (Lint -> Test -> Docker Build)
@@ -86,9 +86,9 @@ docker build -t devops-course-api:latest .
 ```
 
 #### What happens during this build?
-* **Stage 1 (`builder`)**: Uses `node:20-alpine`, installs all dependencies (including TypeScript compilers and types), and runs `npm run build` to output compiled JavaScript into `/usr/src/app/dist`.
-* **Stage 2 (`runner`)**: Starts from a fresh minimal `node:20-alpine` base, installs **only** production dependencies (`npm ci --omit=dev`), copies just the compiled `dist/` directory from Stage 1, switches to the unprivileged `USER node` for security, and sets the container entrypoint.
-* **Result**: The final container image is ~118MB instead of ~890MB, contains zero source files or compilers, and runs reproducibly on any Docker host.
+* **Stage 1 (`builder`)**: Uses `node:22-alpine`, installs the locked dependencies, copies the complete build context (including `index.html` and `vite.config.ts`), and runs `npm run build` to generate the Vite frontend in `/usr/src/app/dist`.
+* **Stage 2 (`runner`)**: Starts from `node:22-alpine`, installs production dependencies, copies the built frontend and Express source, switches to the unprivileged `USER node`, and starts the API with the `tsx` runtime.
+* **Result**: The final image serves the Vite frontend and exposes the Express API on port 3000. The API still requires `API_KEY` at runtime.
 
 ### Step 4: Run the Container
 
@@ -190,8 +190,8 @@ curl -i -X POST http://localhost:3000/calculate \
 The repository includes a GitHub Actions workflow `.github/workflows/ci.yml` that triggers on all pushes and pull requests to `main`.
 
 It defines three sequential quality gates:
-1. **`lint`**: Runs `npm run lint` (ESLint and TypeScript strict checks).
-2. **`test`**: Runs Jest unit and integration tests. Notice that the CI workflow explicitly declares the `API_KEY` variable in the test job's `env` section, ensuring the tests pass without a host `.env` file!
+1. **`lint`**: Runs `npm run lint` (`tsc --noEmit`) to type-check the TypeScript project.
+2. **`test`**: Runs the Node.js built-in test runner against the unit and application configuration tests. The workflow explicitly supplies `API_KEY` in the test job environment; tests also verify that missing and placeholder keys are rejected.
 3. **`build`**: Executes a Docker build inside the GitHub Actions runner to guarantee that the multi-stage build compiles cleanly.
 
 ---
