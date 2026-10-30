@@ -50,7 +50,7 @@ export default function App() {
                 <span aria-hidden="true">·</span>
                 <span>Module: Reproducible Environments &amp; CI</span>
                 <span aria-hidden="true">·</span>
-                <span>Node 20 &amp; Docker</span>
+                <span>Node 22 &amp; Docker</span>
               </div>
 
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white text-balance">
@@ -69,7 +69,7 @@ export default function App() {
                 <span aria-hidden="true">/</span>
                 <span>GitHub Actions (Lint, Test, Build)</span>
                 <span aria-hidden="true">/</span>
-                <span>Jest Test Suite</span>
+                <span>Node.js Test Runner</span>
               </div>
             </div>
 
