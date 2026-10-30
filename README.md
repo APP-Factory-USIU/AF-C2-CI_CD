@@ -4,7 +4,7 @@
 [![Docker Multi-Stage](https://img.shields.io/badge/Docker-Multi--Stage-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x%20Alpine-339933?style=flat-square&logo=nodedotjs)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Jest](https://img.shields.io/badge/Tested%20with-Jest-C21325?style=flat-square&logo=jest)](https://jestjs.io/)
+![Node.js Test Runner](https://img.shields.io/badge/tests-Node.js%20test%20runner-339933?style=flat-square&logo=node.js)
 
 A university-level instructional repository designed to teach the fundamentals of **reproducible execution environments**, **multi-stage containerization**, and **automated continuous integration (CI)** pipelines.
 
