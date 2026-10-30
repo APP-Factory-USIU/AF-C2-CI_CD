@@ -1,0 +1,93 @@
+name: Continuous Integration (CI)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+# Cancel in-progress runs for the same branch if a new commit is pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================================
+  # Job 1: Lint & Static Type Checking
+  # Purpose: Ensure code style consistency, adherence to conventions, and no syntax/type errors.
+  # ============================================================================
+  lint:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies (Strict Lockfile)
+        run: npm ci
+
+      - name: Run Linter (ESLint & TypeCheck)
+        run: npm run lint
+
+  # ============================================================================
+  # Job 2: Automated Unit & Integration Tests
+  # Purpose: Run Jest test suite in an isolated environment with required environment variables.
+  # ============================================================================
+  test:
+    name: Unit & Integration Tests
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies (Strict Lockfile)
+        run: npm ci
+
+      - name: Run Test Suite (Jest)
+        # Crucial DevOps Concept: In CI runners, environment variables are not loaded
+        # from a host .env file (which is gitignored). They must be explicitly declared!
+        env:
+          NODE_ENV: test
+          PORT: 3000
+          API_KEY: ${{ secrets.API_KEY || 'ci_verified_pipeline_test_secret_key' }}
+        run: npm test
+
+  # ============================================================================
+  # Job 3: Multi-Stage Container Build
+  # Purpose: Validate that the Dockerfile successfully compiles and packages the artifact.
+  # ============================================================================
+  build:
+    name: Docker Image Multi-Stage Build
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image (Dry Run & Verification)
+        run: |
+          docker build \
+            --tag devops-course-api:latest \
+            --tag devops-course-api:${{ github.sha }} \
+            .
+
+      - name: Verify Built Container Structure
+        run: |
+          echo "Verifying image size and layer generation..."
+          docker images devops-course-api:latest

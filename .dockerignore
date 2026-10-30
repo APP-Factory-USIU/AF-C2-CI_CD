@@ -1,0 +1,23 @@
+# Ignore node_modules from host machine to guarantee clean build inside container
+node_modules/
+
+# Ignore compiled artifacts from host
+dist/
+build/
+coverage/
+
+# Crucial: Never bake sensitive secrets into the image layers
+.env
+.env.*
+!.env.example
+
+# Version control & OS metadata
+.git/
+.github/
+.DS_Store
+*.log
+npm-debug.log*
+
+# Test files not needed in production container
+tests/
+jest.config.*

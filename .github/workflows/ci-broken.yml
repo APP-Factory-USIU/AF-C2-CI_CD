@@ -1,0 +1,92 @@
+# ==============================================================================
+# BROKEN VARIANT FOR STUDENT PAIR-PROGRAMMING LAB EXERCISE
+# File: .github/workflows/ci-broken.yml
+# 
+# LAB ASSIGNMENT INSTRUCTIONS:
+# This workflow represents a realistic continuous integration failure encountered
+# when deploying production code. When this workflow runs on GitHub Actions, the
+# "test" job fails with exit code 1, blocking downstream Docker image creation.
+#
+# BUG IDENTIFICATION:
+# Notice that the `test` job below invokes `npm test`, BUT omits the `API_KEY`
+# environment variable.
+# Because the application's `app.ts` requires `process.env.API_KEY` to start,
+# the test suite crashes with:
+#   "FATAL ERROR [CONFIG]: Missing required environment variable 'API_KEY'"
+#
+# YOUR MISSION AS A STUDENT PAIR:
+# 1. Inspect the error logs from the CI run.
+# 2. Identify why tests passed on a developer's local machine (where a .env file exists),
+#    yet crashed inside the ephemeral GitHub Actions runner.
+# 3. Fix this workflow by properly injecting the required environment variable into
+#    the test step using GitHub Secrets or default step env:
+#       env:
+#         API_KEY: ${{ secrets.API_KEY || 'ci_test_secret_key' }}
+# ==============================================================================
+
+name: Broken CI Pipeline (Student Lab Challenge)
+
+on:
+  workflow_dispatch: # Allows manual trigger from GitHub UI for lab grading
+  pull_request:
+    branches: [ broken-exercise-* ]
+
+jobs:
+  lint:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Linter
+        run: npm run lint
+
+  test:
+    name: Unit & Integration Tests (FAILS HERE!)
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ------------------------------------------------------------------------
+      # THE CLASSIC DEVOPS TRAP:
+      # Developer forgot that .env is in .gitignore!
+      # The CI runner has no .env file, and no env: block is provided here.
+      # Result: process.env.API_KEY is undefined -> Fatal Exception -> Exit code 1
+      # ------------------------------------------------------------------------
+      - name: Run Test Suite without required secrets
+        env:
+          NODE_ENV: test
+          # BUG: API_KEY is completely missing here!
+        run: npm test
+
+  build:
+    name: Docker Image Multi-Stage Build
+    needs: [lint, test] # Blocked because 'test' fails!
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: docker build -t devops-course-api:latest .
