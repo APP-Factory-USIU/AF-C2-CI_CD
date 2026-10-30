@@ -1,4 +1,3 @@
-import "dotenv/config";
 import express, { type Request, type Response, type NextFunction } from "express";
 
 type Operation = "add" | "subtract" | "multiply" | "divide" | "power";
@@ -66,14 +65,4 @@ export function createApp() {
   app.get("/calculate", requireApiKey, handler);
   app.post("/calculate", requireApiKey, handler);
   return app;
-}
-
-if (process.env.NODE_ENV !== "test") {
-  try {
-    const port = Number(process.env.PORT || 3000);
-    createApp().listen(port, "0.0.0.0", () => console.log(`[INFO] Calculator service listening on port ${port}`));
-  } catch (error) {
-    console.error("[FATAL] Server initialization failed:", error);
-    process.exit(1);
-  }
 }

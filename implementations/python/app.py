@@ -76,7 +76,7 @@ def create_app():
         body = request.get_json(silent=True) or {}
         a_raw = body.get("a") if body.get("a") is not None else request.args.get("a")
         b_raw = body.get("b") if body.get("b") is not None else request.args.get("b")
-        operation = body.get("operation") or request.args.get("op") or "add"
+        operation = str(body.get("operation") or request.args.get("op") or "add")
         a, b = number(a_raw), number(b_raw)
 
         if math.isnan(a) or math.isnan(b):
@@ -86,7 +86,6 @@ def create_app():
             if operation not in OPERATIONS:
                 raise ValueError(f'Unsupported operation: "{operation}"')
             result = calculate(a, b, operation)
-            # Match JSON.stringify: non-finite numeric values become JSON null.
             if isinstance(result, float) and not math.isfinite(result):
                 result = None
             return jsonify(
